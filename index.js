@@ -1,3 +1,4 @@
+const FirebaseClient = require('./src/firebase/client');
 const { Player } = require('discord-player');
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
 const dotenv = require('dotenv');
@@ -50,10 +51,6 @@ eventFiles.forEach(file => {
 	console.log(`	|---Event ${file} loaded`);
 });
 
-client.on('error', (error) => {
-	console.log(error.message);
-});
-
 client.asyncFunctions = new Collection();
 client.player = new Player(client, {
 	ytdlOptions: {
@@ -63,4 +60,10 @@ client.player = new Player(client, {
 });
 
 client.player.extractors.loadDefault();
+
+console.log('Initialising Firebase');
+
+client.firebase = new FirebaseClient();
+client.firebase.initialiseBanks();
+
 client.login(process.env.TOKEN);
