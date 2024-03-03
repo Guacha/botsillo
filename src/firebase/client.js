@@ -54,6 +54,35 @@ class FirebaseClient {
 		}
 		return walletDoc.data();
 	}
+	async initialiseStocks(seeding) {
+		// create stocks collection if it does not exist
+		const stocksCollection = this.db.collection('stonks');
+		const stocks = await stocksCollection.get();
+		if (stocks.empty) {
+			console.log('Initialising stocks collection');
+			for (const [stockId, stock] of Object.entries(seeding)) {
+				console.log('Creating stock:', stockId);
+				await stocksCollection.doc(stockId).set(stock);
+			}
+		}
+	}
+
+	async getStockData(stockId) {
+		const stockDoc = await this.db.collection('stonks').doc(stockId).get();
+		if (!stockDoc.exists) {
+			throw new Error('Stock does not exist');
+		}
+		return stockDoc.data();
+	}
+
+	async updateStockValue(stockId, newValue) {
+		await this.db.collection('stocks').doc(stockId).update({
+			value: newValue,
+			history: {
+				[new Date().toISOString()]: newValue,
+			},
+		});
+	}
 }
 
 module.exports = FirebaseClient;

@@ -1,6 +1,7 @@
 const FirebaseClient = require('./src/firebase/client');
 const { Player } = require('discord-player');
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
+const SimulatedStockMarket = require('./src/utils/stockMarket');
 const dotenv = require('dotenv');
 const fs = require('fs');
 const path = require('node:path');
@@ -65,5 +66,9 @@ console.log('Initialising Firebase');
 
 client.firebase = new FirebaseClient();
 client.firebase.initialiseBanks();
+
+console.log('Initialising stocks');
+client.stockMarket = new SimulatedStockMarket(client.firebase);
+client.stockMarket.startSimulation(client.firebase);
 
 client.login(process.env.TOKEN);
