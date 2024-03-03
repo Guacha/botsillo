@@ -127,7 +127,7 @@ class SimulatedStockMarket {
 	}
 
 	startSimulation(firebaseClient) {
-		setInterval(db => {
+		setInterval(async (db) => {
 			for (const [stockId, stock] of Object.entries(this.stocks)) {
 				// simulate ultra rare stock event.
 				// stocks with low stability have a chance to change value drastically
@@ -135,7 +135,7 @@ class SimulatedStockMarket {
 					const upOrDown = Math.random() < 0.5 ? -1 : 1;
 					const newValue = stock.value * (1 + (Math.random() * 0.5 + 0.5) * upOrDown);
 					this.stocks[stockId].value = newValue;
-					db.updateStockValue(stockId, newValue);
+					await db.updateStockValue(stockId, newValue);
 					continue;
 				}
 
@@ -144,7 +144,7 @@ class SimulatedStockMarket {
 				if (Math.random() < stock.stability / 20 && stock.volatility < 0.7) {
 					const newValue = stock.value + (Math.random() * 10 - 5);
 					this.stocks[stockId].value = newValue;
-					db.updateStockValue(stockId, newValue);
+					await db.updateStockValue(stockId, newValue);
 					continue;
 				}
 
@@ -152,14 +152,15 @@ class SimulatedStockMarket {
 				if (Math.random() < stock.stability / 10) {
 					const newValue = stock.value + (Math.random() * 5 - 2.5);
 					this.stocks[stockId].value = newValue;
-					db.updateStockValue(stockId, newValue);
+					await db.updateStockValue(stockId, newValue);
 					continue;
 				}
 
 				// simulate normal stock value change
 				const newValue = stock.value + (Math.random() * stock.volatility - stock.volatility / 2);
 				this.stocks[stockId].value = newValue;
-				db.updateStockValue(stockId, newValue);
+				await db.updateStockValue(stockId, newValue);
+				console.log('Stock value changed:', stockId, stock.value, '->', newValue);
 			}
 		}, 500, firebaseClient);
 	}
