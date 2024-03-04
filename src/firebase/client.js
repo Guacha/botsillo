@@ -2,7 +2,7 @@ const { Bank } = require('../constants/banking');
 
 const { initializeApp } = require('firebase-admin/app');
 const {
-	getFirestore,
+	getFirestore, FieldValue,
 } = require('firebase-admin/firestore');
 
 class FirebaseClient {
@@ -57,14 +57,19 @@ class FirebaseClient {
 	async initialiseStocks(seeding) {
 		// create stocks collection if it does not exist
 		const stocksCollection = this.db.collection('stonks');
-		const stocks = await stocksCollection.get();
+		let stocks = await stocksCollection.get();
 		if (stocks.empty) {
 			console.log('Initialising stocks collection');
 			for (const [stockId, stock] of Object.entries(seeding)) {
 				console.log('Creating stock:', stockId);
 				await stocksCollection.doc(stockId).set(stock);
 			}
+			stocks = await stocksCollection.get();
 		}
+		return stocks.docs.reduce((acc, doc) => {
+			acc[doc.id] = doc.data();
+			return acc;
+		}, {});
 	}
 
 	async getStockData(stockId) {
@@ -76,11 +81,12 @@ class FirebaseClient {
 	}
 
 	async updateStockValue(stockId, newValue) {
-		await this.db.collection('stocks').doc(stockId).update({
+		await this.db.collection('stonks').doc(stockId).update({
 			value: newValue,
-			history: {
-				[new Date().toISOString()]: newValue,
-			},
+		});
+		await this.db.collection('stonks').doc(stockId).collection('history').add({
+			value: newValue,
+			timestamp: FieldValue.serverTimestamp(),
 		});
 	}
 }

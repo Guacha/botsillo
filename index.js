@@ -68,7 +68,8 @@ client.firebase = new FirebaseClient();
 client.firebase.initialiseBanks();
 
 console.log('Initialising stocks');
-client.stockMarket = new SimulatedStockMarket(client.firebase);
+client.stockMarket = new SimulatedStockMarket();
+client.stockMarket.initialiseStocks(client.firebase);
 client.stockMarket.startSimulation(client.firebase);
 
 client.login(process.env.TOKEN);

@@ -116,10 +116,12 @@ const StockSeeding = {
 
 class SimulatedStockMarket {
 
-	constructor(firebaseClient) {
+	constructor() {
+		this.stocks = {};
+	}
 
-		this.stocks = firebaseClient.initialiseStocks(StockSeeding);
-
+	async initialiseStocks(firebaseClient) {
+		this.stocks = await firebaseClient.initialiseStocks(StockSeeding);
 	}
 
 	getStocks() {
@@ -127,7 +129,8 @@ class SimulatedStockMarket {
 	}
 
 	startSimulation(firebaseClient) {
-		setInterval(async (db) => {
+		setInterval(async (client) => {
+			const batch = client.db.batch();
 			for (const [stockId, stock] of Object.entries(this.stocks)) {
 				// simulate ultra rare stock event.
 				// stocks with low stability have a chance to change value drastically
@@ -135,7 +138,7 @@ class SimulatedStockMarket {
 					const upOrDown = Math.random() < 0.5 ? -1 : 1;
 					const newValue = stock.value * (1 + (Math.random() * 0.5 + 0.5) * upOrDown);
 					this.stocks[stockId].value = newValue;
-					await db.updateStockValue(stockId, newValue);
+					await client.updateStockValue(stockId, newValue);
 					continue;
 				}
 
@@ -144,7 +147,7 @@ class SimulatedStockMarket {
 				if (Math.random() < stock.stability / 20 && stock.volatility < 0.7) {
 					const newValue = stock.value + (Math.random() * 10 - 5);
 					this.stocks[stockId].value = newValue;
-					await db.updateStockValue(stockId, newValue);
+					await client.updateStockValue(stockId, newValue);
 					continue;
 				}
 
@@ -152,17 +155,17 @@ class SimulatedStockMarket {
 				if (Math.random() < stock.stability / 10) {
 					const newValue = stock.value + (Math.random() * 5 - 2.5);
 					this.stocks[stockId].value = newValue;
-					await db.updateStockValue(stockId, newValue);
+					await client.updateStockValue(stockId, newValue);
 					continue;
 				}
 
 				// simulate normal stock value change
 				const newValue = stock.value + (Math.random() * stock.volatility - stock.volatility / 2);
 				this.stocks[stockId].value = newValue;
-				await db.updateStockValue(stockId, newValue);
-				console.log('Stock value changed:', stockId, stock.value, '->', newValue);
+				await client.updateStockValue(stockId, newValue);
 			}
-		}, 500, firebaseClient);
+			batch.commit();
+		}, 5000, firebaseClient);
 	}
 
 
